@@ -23,14 +23,14 @@ def validate_config(config_module):
         # This is a warning, not a critical error, as token length can vary.
         logger.warning("Discord token in config.py appears to be invalid (too short or not a string).")
 
-    # Check Perplexity API key
-    if not hasattr(config_module, 'perplexity') or not config_module.perplexity:
-        logger.error("Perplexity API key not found in config.py or is empty")
-        raise ValueError("Perplexity API key is missing or empty in config.py")
+    # Check Pollinations API key
+    if not hasattr(config_module, 'pollinations_api_key') or not config_module.pollinations_api_key:
+        logger.error("Pollinations API key not found in config.py or is empty")
+        raise ValueError("Pollinations API key is missing or empty in config.py")
 
-    if not isinstance(config_module.perplexity, str) or len(config_module.perplexity) < 20:
+    if not isinstance(config_module.pollinations_api_key, str) or len(config_module.pollinations_api_key) < 10:
         # This is a warning.
-        logger.warning("Perplexity API key in config.py appears to be invalid (too short or not a string).")
+        logger.warning("Pollinations API key in config.py appears to be invalid (too short or not a string).")
         
     # Check Firecrawl API key
     if not hasattr(config_module, 'firecrawl_api_key') or not config_module.firecrawl_api_key:

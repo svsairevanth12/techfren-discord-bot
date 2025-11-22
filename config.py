@@ -18,16 +18,21 @@ token = os.getenv('DISCORD_BOT_TOKEN')
 if not token:
     raise ValueError("DISCORD_BOT_TOKEN environment variable is required")
 
-# Perplexity API Key (required)
-# Environment variable: PERPLEXITY_API_KEY
-perplexity = os.getenv('PERPLEXITY_API_KEY')
-if not perplexity:
-    raise ValueError("PERPLEXITY_API_KEY environment variable is required")
+# Pollinations API Key (required for LLM features)
+# Environment variable: POLLINATIONS_API_KEY
+# Get your token from https://auth.pollinations.ai
+pollinations_api_key = os.getenv('POLLINATIONS_API_KEY')
+if not pollinations_api_key:
+    raise ValueError("POLLINATIONS_API_KEY environment variable is required")
+
+# Legacy alias for backward compatibility
+perplexity = pollinations_api_key
 
 # LLM Model Configuration (optional)
 # Environment variable: LLM_MODEL
-# Default model is "sonar" for Perplexity
-llm_model = os.getenv('LLM_MODEL', 'sonar')
+# Default model is "gemini-search" for Pollinations (has web search capability)
+# Other options: "openai", "mistral", "searchgpt"
+llm_model = os.getenv('LLM_MODEL', 'gemini-search')
 
 # Rate Limiting Configuration (optional)
 # Environment variables: RATE_LIMIT_SECONDS, MAX_REQUESTS_PER_MINUTE
@@ -73,9 +78,12 @@ else:
 links_dump_channel_id = os.getenv('LINKS_DUMP_CHANNEL_ID')
 
 # LLM API Configuration (optional)
-# Environment variable: PERPLEXITY_BASE_URL
-# Base URL for Perplexity API (or compatible API)
-perplexity_base_url = os.getenv('PERPLEXITY_BASE_URL', 'https://api.perplexity.ai')
+# Environment variable: LLM_BASE_URL
+# Base URL for Pollinations API (OpenAI-compatible endpoint)
+llm_base_url = os.getenv('LLM_BASE_URL', 'https://text.pollinations.ai/openai')
+
+# Legacy alias for backward compatibility
+perplexity_base_url = llm_base_url
 
 # HTTP Headers Configuration (optional)
 # Environment variables: HTTP_REFERER, X_TITLE

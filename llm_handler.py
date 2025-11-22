@@ -103,20 +103,22 @@ async def call_llm_api(query, message_context=None):
     try:
         logger.info(f"Calling LLM API with query: {query[:50]}{'...' if len(query) > 50 else ''}")
 
-        # Check if Perplexity API key exists
-        if not hasattr(config, 'perplexity') or not config.perplexity:
-            logger.error("Perplexity API key not found in config.py or is empty")
-            return "Error: Perplexity API key is missing. Please contact the bot administrator."
+        # Check if Pollinations API key exists
+        if not hasattr(config, 'pollinations_api_key') or not config.pollinations_api_key:
+            logger.error("Pollinations API key not found in config.py or is empty")
+            return "Error: Pollinations API key is missing. Please contact the bot administrator."
 
-# Initialize the OpenAI client with Perplexity base URL
+        # Initialize the OpenAI client with Pollinations base URL
+        # Pollinations uses Bearer token auth, but OpenAI client handles this via api_key
         openai_client = AsyncOpenAI(
-            base_url=getattr(config, 'perplexity_base_url', 'https://api.perplexity.ai'),
-            api_key=config.perplexity,
+            base_url=getattr(config, 'llm_base_url', 'https://text.pollinations.ai/openai'),
+            api_key=config.pollinations_api_key,
             timeout=60.0
         )
-        
-        # Get the model from config or use default (Perplexity models)
-        model = getattr(config, 'llm_model', "sonar")
+
+        # Get the model from config or use default (Pollinations models)
+        # gemini-search has built-in web search capability
+        model = getattr(config, 'llm_model', "gemini-search")
         
         # Prepare the user content with message context if available
         user_content = query
@@ -228,11 +230,8 @@ async def call_llm_api(query, message_context=None):
                 logger.debug(f"Added scraped content to LLM prompt: {len(scraped_content_parts)} URL(s) with content")
 
         # Make the API request
+        # Pollinations uses referrer for tracking (optional)
         completion = await openai_client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": getattr(config, 'http_referer', 'https://techfren.net'),  # Optional site URL
-                "X-Title": getattr(config, 'x_title', 'TechFren Discord Bot'),  # Optional site title
-            },
             model=model,  # Use the model from config
             messages=[
                 {
@@ -258,15 +257,8 @@ async def call_llm_api(query, message_context=None):
         # Extract the response
         message = completion.choices[0].message.content
 
-        # Check if Perplexity returned citations
-        citations = None
-        if hasattr(completion, 'citations') and completion.citations:
-            logger.info(f"Found {len(completion.citations)} citations from Perplexity")
-            citations = completion.citations
-
         # Apply Discord formatting enhancements
-        # The formatter will convert [1], [2] etc. into clickable hyperlinked footnotes
-        formatted_message = DiscordFormatter.format_llm_response(message, citations)
+        formatted_message = DiscordFormatter.format_llm_response(message)
         
         logger.info(f"LLM API response received successfully: {formatted_message[:50]}{'...' if len(formatted_message) > 50 else ''}")
         return formatted_message
@@ -431,27 +423,23 @@ Do not include an introductory paragraph before the sections. Start directly wit
         
         logger.info(f"Calling LLM API for channel summary: #{channel_name} for the past {time_period}")
 
-        # Check if Perplexity API key exists
-        if not hasattr(config, 'perplexity') or not config.perplexity:
-            logger.error("Perplexity API key not found in config.py or is empty")
-            return "Error: Perplexity API key is missing. Please contact the bot administrator."
+        # Check if Pollinations API key exists
+        if not hasattr(config, 'pollinations_api_key') or not config.pollinations_api_key:
+            logger.error("Pollinations API key not found in config.py or is empty")
+            return "Error: Pollinations API key is missing. Please contact the bot administrator."
 
-        # Initialize the OpenAI client with Perplexity base URL
+        # Initialize the OpenAI client with Pollinations base URL
         openai_client = AsyncOpenAI(
-            base_url=getattr(config, 'perplexity_base_url', 'https://api.perplexity.ai'),
-            api_key=config.perplexity,
+            base_url=getattr(config, 'llm_base_url', 'https://text.pollinations.ai/openai'),
+            api_key=config.pollinations_api_key,
             timeout=60.0
         )
 
-        # Get the model from config or use default
-        model = getattr(config, 'llm_model', "sonar")
+        # Get the model from config or use default (gemini-search has web search)
+        model = getattr(config, 'llm_model', "gemini-search")
 
         # Make the API request with a higher token limit for summaries
         completion = await openai_client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": getattr(config, 'http_referer', 'https://techfren.net'),
-                "X-Title": getattr(config, 'x_title', 'TechFren Discord Bot'),
-            },
             model=model,  # Use the model from config
             messages=[
                 {
@@ -470,15 +458,8 @@ Do not include an introductory paragraph before the sections. Start directly wit
         # Extract the response
         summary = completion.choices[0].message.content
 
-        # Check if Perplexity returned citations
-        citations = None
-        if hasattr(completion, 'citations') and completion.citations:
-            logger.info(f"Found {len(completion.citations)} citations from Perplexity for summary")
-            citations = completion.citations
-
         # Apply Discord formatting enhancements to the summary
-        # The formatter will convert [1], [2] etc. into clickable hyperlinked footnotes
-        formatted_summary = DiscordFormatter.format_llm_response(summary, citations)
+        formatted_summary = DiscordFormatter.format_llm_response(summary)
 
         # Enhance specific sections in the summary
         formatted_summary = DiscordFormatter._enhance_summary_sections(formatted_summary)
@@ -558,20 +539,20 @@ async def summarize_scraped_content(markdown_content: str, url: str) -> Optional
 
         logger.info(f"Summarizing content from URL: {url}")
 
-        # Check if Perplexity API key exists
-        if not hasattr(config, 'perplexity') or not config.perplexity:
-            logger.error("Perplexity API key not found in config.py or is empty")
+        # Check if Pollinations API key exists
+        if not hasattr(config, 'pollinations_api_key') or not config.pollinations_api_key:
+            logger.error("Pollinations API key not found in config.py or is empty")
             return None
 
-        # Initialize the OpenAI client with Perplexity base URL
+        # Initialize the OpenAI client with Pollinations base URL
         openai_client = AsyncOpenAI(
-            base_url=getattr(config, 'perplexity_base_url', 'https://api.perplexity.ai'),
-            api_key=config.perplexity,
+            base_url=getattr(config, 'llm_base_url', 'https://text.pollinations.ai/openai'),
+            api_key=config.pollinations_api_key,
             timeout=60.0
         )
 
-        # Get the model from config or use default
-        model = getattr(config, 'llm_model', "sonar")
+        # Get the model from config or use default (gemini-search has web search)
+        model = getattr(config, 'llm_model', "gemini-search")
 
         # Create the prompt for the LLM
         prompt = f"""Analyze and summarize this content from {url}:
@@ -585,10 +566,6 @@ Keep the summary brief and focused on the most important information."""
 
         # Make the API request
         completion = await openai_client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": getattr(config, 'http_referer', 'https://techfren.net'),
-                "X-Title": getattr(config, 'x_title', 'TechFren Discord Bot'),
-            },
             model=model,  # Use the model from config
             messages=[
                 {
