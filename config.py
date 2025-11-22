@@ -88,8 +88,8 @@ perplexity_base_url = llm_base_url
 # HTTP Headers Configuration (optional)
 # Environment variables: HTTP_REFERER, X_TITLE
 # Used in LLM API requests for tracking/identification
-http_referer = os.getenv('HTTP_REFERER', 'https://techfren.net')
-x_title = os.getenv('X_TITLE', 'TechFren Discord Bot')
+http_referer = os.getenv('HTTP_REFERER', 'https://vibefounder.com')
+x_title = os.getenv('X_TITLE', 'Vibe Founder Discord Bot')
 
 # Summary Command Limits
 # Maximum hours that can be requested in summary commands (7 days)
